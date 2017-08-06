@@ -4,6 +4,7 @@
 \name{caretEnsemble}
 \alias{caretEnsemble}
 \alias{caretEnsemble-package}
+\alias{caretEnsemble}
 \title{caretEnsemble: Make ensembles of caret models.}
 \usage{
 caretEnsemble(all.models, ...)
@@ -49,4 +50,3 @@ ens <- caretEnsemble(models)
 summary(ens)
 }
 }
-
