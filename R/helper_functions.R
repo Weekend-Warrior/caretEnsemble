@@ -338,5 +338,8 @@ makePredObsMatrix <- function(list_of_models){
   )
 
   #Return
-  return(list(obs=modelLibrary$obs, preds=as.matrix(modelLibrary[, model_names, with=FALSE]), type=type))
+    return(list(obs=modelLibrary$obs,
+              preds=as.matrix(modelLibrary[, model_names, with=FALSE]),
+              samps=as.data.frame(modelLibrary[, -which(colnames(modelLibrary) %in% model_names), with=FALSE]),
+              type=type))
 }
