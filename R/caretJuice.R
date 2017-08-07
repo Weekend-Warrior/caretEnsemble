@@ -1,5 +1,6 @@
 #' @importFrom magrittr '%>%'
 #' @importFrom pipeR '%>>%'
+#' @importFrom magrittr '%<>%'
 #' @export
 
 # blender
@@ -75,9 +76,12 @@ predict.caretBlender <- function (model, data, ...) {
   stopifnot(any(class(model) == 'caretBlender'))
 
   if (all(names(model) %in% colnames(data))) {
-    conflicts <- which(colnames(data) %in% names(model))
-
-    data <- data[, conflicts]
+    data %<>%
+      dplyr::select_(paste0('c(',
+                            paste(names(model),
+                                  sep = ', '),
+                            ')')) %>%
+      as.data.frame
   } else {
     stop('Not all blended variables are present in the data.frame.')
   }
