@@ -20,7 +20,9 @@ blender.factor <- function(x, y, method = 'glmnet', trControl, ...) {
                      list(x = .) %>%
                      c(list(y = y,
                             method = method,
-                            trControl = trControl),
+                            trControl = trControl,
+                            tuneGrid = expand.grid(alpha = 0,
+                                                   lambda = seq(.01, 10.01, 1))),
                        list(...)) %>%
                      do.call('train', .)) -> blender
 
@@ -40,7 +42,9 @@ blender.numeric <- function(x, y, method = 'cubist', trControl, ...) {
                      list(x = .) %>%
                      c(list(y = y,
                             method = method,
-                            trControl = trControl),
+                            trControl = trControl,
+                            tuneGrid = expand.grid(committees = 1:3,
+                                                   neighbors = 0:2)),
                        list(...)) %>%
                      do.call('train', .)) -> blender
 
