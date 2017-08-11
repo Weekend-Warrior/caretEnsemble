@@ -123,7 +123,7 @@ predict.caretBlender <- function (model, data, ...) {
     purrr::map2_df(.y = data,
                    ~ .y %>%
                      as.data.frame %>%
-                     predict(.x$onehot, ., sparse = T) %>%
+                     predict(.x$onehot, ., sparse = !is.null(.x$onehot$.$levels)) %>%
                      predict(.x, ., ...))
 }
 
