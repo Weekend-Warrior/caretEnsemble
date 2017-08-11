@@ -1,23 +1,48 @@
 #' @importFrom magrittr '%>%'
 #' @importFrom pipeR '%>>%'
 #' @importFrom magrittr '%<>%'
-#' @export
 
 # blender
-blender <- function(x, y, method = 'glmnet', trControl, ...) {
+blender <- function(x, y, trControl, ...) {
+  UseMethod('blender')
+}
+
+#' @method blender factor
+
+blender.factor <- function(x, y, method = 'glmnet', trControl, ...) {
   suppressWarnings(x %>%
-    as.data.frame %>%
-    onehot::onehot(max_levels = length(y)) %>>%
-    (~ onehot_encoding) %>>%
-    predict(x %>%
-              as.data.frame,
-            sparse = T) %>%
-    list(x = .) %>%
-    c(list(y = y,
-           method = method,
-           trControl = trControl),
-      list(...)) %>%
-    do.call('train', .)) -> blender
+                     as.data.frame %>%
+                     onehot::onehot(max_levels = length(y), addNA = TRUE) %>>%
+                     (~ onehot_encoding) %>>%
+                     predict(x %>%
+                               as.data.frame,
+                             sparse = T) %>%
+                     list(x = .) %>%
+                     c(list(y = y,
+                            method = method,
+                            trControl = trControl),
+                       list(...)) %>%
+                     do.call('train', .)) -> blender
+
+  blender$onehot <- onehot_encoding
+  return(blender)
+}
+
+#' @method blender numeric
+
+blender.numeric <- function(x, y, method = 'cubist', trControl, ...) {
+  suppressWarnings(x %>%
+                     as.data.frame %>%
+                     onehot::onehot(max_levels = length(y), addNA = TRUE) %>>%
+                     (~ onehot_encoding) %>>%
+                     predict(x %>%
+                               as.data.frame) %>%
+                     list(x = .) %>%
+                     c(list(y = y,
+                            method = method,
+                            trControl = trControl),
+                       list(...)) %>%
+                     do.call('train', .)) -> blender
 
   blender$onehot <- onehot_encoding
   return(blender)
@@ -27,12 +52,11 @@ blender <- function(x, y, method = 'glmnet', trControl, ...) {
 # Creates a caretList of univariate encodings
 #' @export
 
-caretBlender <- function (x, y, method = 'glmnet', trControl, ...) {
+caretBlender <- function (x, y, trControl, ...) {
   if (is.null(trControl$indexOut)) stop('caretBlender requires both an index and an indexOut in the trainControl.')
 
   blendered <- purrr::map(x,
-                          ~ blender(.x, y,
-                                    method, trControl, ...)) %>%
+                          ~ blender(.x, y, trControl = trControl, ...)) %>%
     setNames(nm = colnames(x))
 
   class(blendered) <- c('caretBlender', 'caretList')
@@ -49,14 +73,20 @@ caretJuice <- function (blender, data, ...) {
   if (any(colnames(data) %in% names(blender))) {
     conflicts <- which(colnames(data) %in% names(blender))
 
-    data <- data[, -conflicts]
+    if (!all(colnames(data) %in% names(blender))) data <- data[, -conflicts]
   }
 
   predobs <- makePredObsMatrix(blender)
 
+  if (!all(colnames(data) %in% names(blender))) {
+    newx <- cbind(as.data.frame(predobs$preds),
+                     data[predobs$samps$rowIndex, ])
+  } else {
+    newx <- predobs$preds
+  }
+
   #Build a caret model
-  model <- train(cbind(as.data.frame(predobs$preds),
-                       data[predobs$samps$rowIndex, ]),
+  model <- train(newx,
                  predobs$obs, ...)
 
   #Return final model
@@ -107,10 +137,16 @@ predict.caretJuice <- function(model, data, ...) {
   if (any(colnames(data) %in% names(model$models))) {
     conflicts <- which(colnames(data) %in% names(model$models))
 
-    data <- data[, -conflicts]
+    if (!all(colnames(data) %in% names(model$models))) data <- data[, -conflicts]
+  }
+
+  if (!all(colnames(data) %in% names(model$models))) {
+    newdata <- cbind(blendered, data)
+  } else {
+    newdata <- blendered
   }
 
   stacked <- predict(model$ens_model,
-                     cbind(blendered, data),
+                     newdata,
                      ...)
 }
