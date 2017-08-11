@@ -103,7 +103,6 @@ caretJuice <- function (blender, data, ...) {
 #' @method predict caretBlender
 
 predict.caretBlender <- function (model, data, ...) {
-  stopifnot(any(class(model) == 'caretBlender'))
 
   if (all(names(model) %in% colnames(data))) {
     data %<>%
@@ -130,7 +129,6 @@ predict.caretBlender <- function (model, data, ...) {
 #' @method predict caretJuice
 
 predict.caretJuice <- function(model, data, ...) {
-  stopifnot(any(class(model) == 'caretJuice'))
 
   blendered <- predict(model$models, data)
 
