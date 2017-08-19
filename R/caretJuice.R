@@ -9,7 +9,8 @@ blender <- function(x, y, trControl, ...) {
 
 #' @method blender factor
 
-blender.factor <- function(x, y, method = 'glmnet', trControl, ...) {
+blender.factor <- function(x, y, trControl, ...) {
+  method <- 'glmnet'
   suppressWarnings(x %>%
                      as.data.frame %>%
                      onehot::onehot(max_levels = length(y), addNA = TRUE) %>>%
@@ -32,7 +33,8 @@ blender.factor <- function(x, y, method = 'glmnet', trControl, ...) {
 
 #' @method blender numeric
 
-blender.numeric <- function(x, y, method = 'cubist', trControl, ...) {
+blender.numeric <- function(x, y, trControl, ...) {
+  method <- 'cubist'
   suppressWarnings(x %>%
                      as.data.frame %>%
                      onehot::onehot(max_levels = length(y), addNA = TRUE) %>>%
