@@ -24,7 +24,7 @@ blender.factor <- function(x, y, trControl, ...) {
                             method = method,
                             trControl = trControl,
                             tuneGrid = expand.grid(alpha = 0,
-                                                   lambda = seq(.01, 10.01, 1))),
+                                                   lambda = seq(.01, 4.01, .4))),
                        theDots[[1]]) %>%
                      do.call('train', .)) -> blender
 
