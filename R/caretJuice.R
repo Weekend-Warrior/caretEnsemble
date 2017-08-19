@@ -10,6 +10,7 @@ blender <- function(x, y, trControl, ...) {
 #' @method blender factor
 
 blender.factor <- function(x, y, trControl, ...) {
+  theDots <- list(...)
   method <- 'glmnet'
   suppressWarnings(x %>%
                      as.data.frame %>%
@@ -24,7 +25,7 @@ blender.factor <- function(x, y, trControl, ...) {
                             trControl = trControl,
                             tuneGrid = expand.grid(alpha = 0,
                                                    lambda = seq(.01, 10.01, 1))),
-                       list(...)) %>%
+                       theDots[[1]]) %>%
                      do.call('train', .)) -> blender
 
   blender$onehot <- onehot_encoding
@@ -34,6 +35,7 @@ blender.factor <- function(x, y, trControl, ...) {
 #' @method blender numeric
 
 blender.numeric <- function(x, y, trControl, ...) {
+  theDots <- list(...)
   method <- 'cubist'
   suppressWarnings(x %>%
                      as.data.frame %>%
@@ -47,7 +49,7 @@ blender.numeric <- function(x, y, trControl, ...) {
                             trControl = trControl,
                             tuneGrid = expand.grid(committees = 1:3,
                                                    neighbors = 0:2)),
-                       list(...)) %>%
+                       theDots[[1]]) %>%
                      do.call('train', .)) -> blender
 
   blender$onehot <- onehot_encoding
@@ -59,10 +61,12 @@ blender.numeric <- function(x, y, trControl, ...) {
 #' @export
 
 caretBlender <- function (x, y, trControl, ...) {
+  theDots <- list(...)
+
   if (is.null(trControl$indexOut)) stop('caretBlender requires both an index and an indexOut in the trainControl.')
 
   blendered <- purrr::map(x,
-                          ~ blender(.x, y, trControl = trControl, ...)) %>%
+                          ~ blender(.x, y, trControl = trControl, theDots)) %>%
     setNames(nm = colnames(x))
 
   class(blendered) <- c('caretBlender', 'caretList')
