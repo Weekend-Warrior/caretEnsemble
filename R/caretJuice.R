@@ -116,11 +116,12 @@ predict.caretBlender <- function (model, data, ...) {
   theDots <- list(...)
 
   if (all(names(model) %in% colnames(data))) {
+    name_string <- names(model) %>%
+      paste(collapse = ', ') %>%
+      paste0('c(', ., ')')
+
     data %<>%
-      dplyr::select_(paste0('c(',
-                            paste(names(model),
-                                  sep = ', '),
-                            ')')) %>%
+      dplyr::select_(name_string) %>%
       as.data.frame
   } else {
     stop('Not all blended variables are present in the data.frame.')
