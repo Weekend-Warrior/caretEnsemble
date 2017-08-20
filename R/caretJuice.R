@@ -113,6 +113,7 @@ caretJuice <- function (blender, data, ...) {
 #' @method predict caretBlender
 
 predict.caretBlender <- function (model, data, ...) {
+  theDots <- list(...)
 
   if (all(names(model) %in% colnames(data))) {
     data %<>%
@@ -130,7 +131,9 @@ predict.caretBlender <- function (model, data, ...) {
                    ~ .y %>%
                      as.data.frame %>%
                      predict(.x$onehot, ., sparse = !is.null(.x$onehot$.$levels)) %>%
-                     predict(.x, ., ...))
+                     list(.x, .) %>%
+                     c(theDots) %>%
+                     do.call('predict', .))
 }
 
 # predict.caretJuice
