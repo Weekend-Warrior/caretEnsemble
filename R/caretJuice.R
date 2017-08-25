@@ -2,6 +2,37 @@
 #' @importFrom pipeR '%>>%'
 #' @importFrom magrittr '%<>%'
 
+glmnet <- caret::getModelInfo('glmnet')[[2]]
+
+glmnet$predict <- function (modelFit, newdata, submodels = NULL)
+{
+  if (length(modelFit$obsLevels) < 2) {
+    out <- predict(modelFit, newdata, s = modelFit$lambdaOpt)
+  }
+  else {
+    out <- predict(modelFit, newdata, s = modelFit$lambdaOpt,
+                   type = "class")
+  }
+  if (is.matrix(out))
+    out <- out[, 1]
+  if (!is.null(submodels)) {
+    if (length(modelFit$obsLevels) < 2) {
+      tmp <- as.list(as.data.frame(predict(modelFit, newdata,
+                                           s = submodels$lambda)))
+    }
+    else {
+      tmp <- predict(modelFit, newdata, s = submodels$lambda,
+                     type = "class")
+      tmp <- if (is.matrix(tmp))
+        as.data.frame(tmp, stringsAsFactors = FALSE)
+      else as.character(tmp)
+      tmp <- as.list(tmp)
+    }
+    out <- c(list(out), tmp)
+  }
+  out
+}
+
 # blender
 blender <- function(x, y, trControl, ...) {
   UseMethod('blender')
@@ -11,7 +42,7 @@ blender <- function(x, y, trControl, ...) {
 
 blender.factor <- function(x, y, trControl, ...) {
   theDots <- list(...)
-  method <- 'glmnet'
+  method <- glmnet
   suppressWarnings(x %>%
                      as.data.frame %>%
                      onehot::onehot(max_levels = length(y), addNA = TRUE) %>>%
