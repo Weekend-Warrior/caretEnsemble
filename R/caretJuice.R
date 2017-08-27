@@ -33,6 +33,58 @@ glmnet$predict <- function (modelFit, newdata, submodels = NULL)
   out
 }
 
+spectrumString <- caret::getModelInfo('svmSpectrumString')[[1]]
+
+spectrumString$fit <- function(x, y, wts, param, lev, last, classProbs, ...) {
+  if(any(names(list(...)) == "prob.model") | is.numeric(y))
+  {
+    out <- ksvm(x = as.list(x), y = y,
+                kernel = stringdot,
+                kpar = list(type = "spectrum",
+                            length = param$length),
+                C = param$C, ...)
+  } else {
+    out <- ksvm(x = as.list(x), y = y,
+                kernel = stringdot,
+                kpar = list(type = "spectrum",
+                            length = param$length),
+                C = param$C,
+                prob.model = classProbs,
+                ...)
+  }
+
+  out
+}
+
+spectrumString$predict <- function(modelFit, newdata, submodels = NULL) {
+  svmPred <- function(obj, x)
+  {
+    hasPM <- !is.null(unlist(obj@prob.model))
+    if(hasPM) {
+      pred <- lev(obj)[apply(predict(obj, x, type = "probabilities"),
+                             1, which.max)]
+    } else pred <- predict(obj, x)
+    pred
+  }
+  out <- try(svmPred(modelFit, as.list(newdata)), silent = TRUE)
+  if(is.character(lev(modelFit)))
+  {
+    if(class(out)[1] == "try-error")
+    {
+      warning("kernlab class prediction calculations failed; returning NAs")
+      out <- rep("", nrow(newdata))
+      out[seq(along = out)] <- NA
+    }
+  } else {
+    if(class(out)[1] == "try-error")
+    {
+      warning("kernlab prediction calculations failed; returning NAs")
+      out <- rep(NA, nrow(newdata))
+    }
+  }
+  out
+}
+
 # blender
 blender <- function(x, y, trControl, ...) {
   UseMethod('blender')
@@ -84,6 +136,27 @@ blender.numeric <- function(x, y, trControl, ...) {
                      do.call('train', .)) -> blender
 
   blender$onehot <- onehot_encoding
+  return(blender)
+}
+
+#' @method blender character
+
+blender.character <- function(x, y, trControl, ...) {
+  theDots <- list(...)
+  method <- spectrumString
+  suppressWarnings(x %>%
+                     ifelse(is.na(.), "", .) %>%
+                     as.data.frame %>%
+                     as.matrix %>%
+                     list(x = .) %>%
+                     c(list(y = y,
+                            method = method,
+                            trControl = trControl,
+                            tuneGrid = expand.grid(length = 2:4,
+                                                   C = 10^seq(-3, 3, 2))),
+                       theDots[[1]]) %>%
+                     do.call('train', .)) -> blender
+
   return(blender)
 }
 
