@@ -146,6 +146,7 @@ blender.character <- function(x, y, trControl, ...) {
   method <- spectrumString
   suppressWarnings(x %>%
                      ifelse(is.na(.), "", .) %>%
+                     stringr::str_pad(., 4) %>%
                      as.data.frame %>%
                      as.matrix %>%
                      list(x = .) %>%
