@@ -42,7 +42,8 @@ spectrumString$fit <- function(x, y, wts, param, lev, last, classProbs, ...) {
                 kernel = stringdot,
                 kpar = list(type = "spectrum",
                             length = param$length),
-                C = param$C, ...)
+                C = param$C,
+                ...)
   } else {
     out <- ksvm(x = as.list(x), y = y,
                 kernel = stringdot,
@@ -61,9 +62,9 @@ spectrumString$predict <- function(modelFit, newdata, submodels = NULL) {
   {
     hasPM <- !is.null(unlist(obj@prob.model))
     if(hasPM) {
-      pred <- lev(obj)[apply(predict(obj, x, type = "probabilities"),
+      pred <- lev(obj)[apply(kernlab::predict(obj, x, type = "probabilities"),
                              1, which.max)]
-    } else pred <- predict(obj, x)
+    } else pred <- kernlab::predict(obj, x)
     pred
   }
   out <- try(svmPred(modelFit, as.list(newdata)), silent = TRUE)
@@ -146,7 +147,7 @@ blender.character <- function(x, y, trControl, ...) {
   method <- spectrumString
   suppressWarnings(x %>%
                      ifelse(is.na(.), "", .) %>%
-                     stringr::str_pad(., 4) %>%
+                     stringr::str_pad(., 4, 'right') %>%
                      as.data.frame %>%
                      as.matrix %>%
                      list(x = .) %>%
